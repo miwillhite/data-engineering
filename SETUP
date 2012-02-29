@@ -1,0 +1,21 @@
+SETUP INSTRUCTIONS
+
+
+1) Ensure you have Ruby installed (>= 1.9.2) and SQLite3
+
+
+2) Run the following to setup the environment:
+
+    => gem install bundler
+    => bundle
+
+
+3) Launch the app from with:
+
+    => rackup config.ru
+    
+
+Notes:
+  * Each time the app is launched the database is wiped clean
+  * Use `racksh` while the server is running to inspect the database contents
+    (try it after a file has been successfully uploaded)
