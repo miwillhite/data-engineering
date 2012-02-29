@@ -1,4 +1,4 @@
-SETUP INSTRUCTIONS
+SETUP INSTRUCTIONS (See the openid branch for the authenticated version)
 
 
 1) Ensure you have Ruby installed (>= 1.9.2) and SQLite3
