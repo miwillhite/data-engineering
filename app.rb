@@ -1,10 +1,29 @@
-%w( rubygems sinatra data_mapper dm-sqlite-adapter haml ).each do |dep| 
+%w( 
+  rubygems sinatra haml
+  data_mapper dm-sqlite-adapter 
+  omniauth omniauth-openid openid/store/filesystem
+
+).each do |dep| 
   require dep 
 end
 
 
 
+# Setup OpenID stuff
+
+# OpenID is too big for Sinatra sessions, use Pool instead
+# http://programming.nitinpande.com/2011/02/warning-racksessioncookie-data-size.html
+use Rack::Session::Pool
+
+use OmniAuth::Builder do
+  provider :openid, store: OpenID::Store::Filesystem.new('/tmp'), :identifier => 'https://www.google.com/accounts/o8/id'
+end
+
+
+
+
 # Setup database
+
 configure do
   
   DataMapper.setup(:default, "sqlite://#{Dir.pwd}/customer_data.db")  
@@ -15,7 +34,9 @@ end
 
 
 
+
 # Define Models
+
 class Item
   include DataMapper::Resource
   
@@ -29,6 +50,7 @@ class Item
   has n, :purchasers, through: Resource
 end
 
+
 class Merchant
   include DataMapper::Resource
   
@@ -38,6 +60,7 @@ class Merchant
   
   has n, :items
 end
+
 
 class Purchaser
   include DataMapper::Resource
@@ -49,18 +72,44 @@ class Purchaser
   has n, :items, through: Resource
 end
 
+
 DataMapper.finalize
 DataMapper.auto_migrate!
 
 
 
-# Render the form to the user w/ upload instructions
+
+# Login routes
+
+get '/login' do
+  haml :login
+end
+
+post '/auth/:provider/callback' do
+  session['omniauth.auth'] = env['omniauth.auth']
+
+  redirect '/'
+end
+
+get '/auth/failure' do
+  params['message']
+end
+
+
+
+
+# Form processing routes
+
+before '/' do
+  redirect '/login' unless session['omniauth.auth']
+end
+
+
 get '/' do
   haml :index
 end
 
 
-# Process the data and render results
 post '/' do
   
   # Read and parse the uploaded file
@@ -148,3 +197,10 @@ __END__
       %input{ type: "submit" }
       
       = "<h1>Gross Revenue: #{@revenue}</h1>" if @revenue
+      
+      
+      
+      
+@@ login
+%form{ action: "/auth/open_id", method: "POST" }
+  %input{ name: "commit", type: "submit", value: "Sign in with OpenId" }
